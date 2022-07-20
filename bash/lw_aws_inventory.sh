@@ -10,22 +10,27 @@
 
 
 AWS_PROFILE=default
+AWS_REGIONS=
+export AWS_MAX_ATTEMPTS=20
 
 # Usage: ./lw_aws_inventory.sh
-while getopts ":jp:" opt; do
+while getopts ":jpr:" opt; do
   case ${opt} in
     p )
       AWS_PROFILE=$OPTARG
+      ;;
+    r )
+      AWS_REGIONS=$OPTARG
       ;;
     j )
       JSON="true"
       ;;
     \? )
-      echo "Usage: ./lw_aws_inventory.sh [-p profile] [-j]" 1>&2
+      echo "Usage: ./lw_aws_inventory.sh [-p profile] [-j] [-r]" 1>&2
       exit 1
       ;;
     : )
-      echo "Usage: ./lw_aws_inventory.sh [-p profile] [-j]" 1>&2
+      echo "Usage: ./lw_aws_inventory.sh [-p profile] [-j] [-r]" 1>&2
       exit 1
       ;;
   esac
@@ -185,7 +190,12 @@ function getLambdaFunctions {
 
 function calculateInventory {
   profile=$1
-  for r in $(getRegions); do
+  if [ -z "$AWS_REGIONS" ]
+  then
+    AWS_REGIONS=$(printf "$(getRegions)" | paste -sd, -)
+  fi
+
+  for r in $(echo $AWS_REGIONS | sed "s/,/ /g"); do
     if [ "$JSON" != "true" ]; then
       echo "Scanning $r..."
     fi
