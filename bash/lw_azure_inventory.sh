@@ -11,7 +11,7 @@ SQL_SERVERS=0
 LOAD_BALANCERS=0
 GATEWAYS=0
 
-BLACKLIST_SUBSCRIPTIONS=(
+BLACKLISTED_SUBSCRIPTIONS=(
   "8d7950ca-853a-4339-8eae-34578634aeee"
   "8d7950ca-853a-4339-8eae-34578634afff"
 )
@@ -62,7 +62,7 @@ echo "Fetching Subscriptions..."
 for sub in $(getSubscriptions); do
   echo "Switching to subscription $sub"
   
-  if [[ ${BLACKLIST_SUBSCRIPTIONS[*]} =~ ${sub} ]]; then
+  if [[ ${BLACKLISTED_SUBSCRIPTIONS[*]} =~ ${sub} ]]; then
     echo "blacklisted subscription, skipping - $sub"
   else
     setSubscription $sub
