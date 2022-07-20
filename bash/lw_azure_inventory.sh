@@ -11,6 +11,11 @@ SQL_SERVERS=0
 LOAD_BALANCERS=0
 GATEWAYS=0
 
+BLACKLIST_SUBSCRIPTIONS=(
+  "8d7950ca-853a-4339-8eae-34578634aeee"
+  "8d7950ca-853a-4339-8eae-34578634afff"
+)
+
 function getSubscriptions {
   az account list | jq -r '.[] | .id'
 }
@@ -56,29 +61,34 @@ echo "Fetching Subscriptions..."
 
 for sub in $(getSubscriptions); do
   echo "Switching to subscription $sub"
-  setSubscription $sub
+  
+  if [[ ${BLACKLIST_SUBSCRIPTIONS[*]} =~ ${sub} ]]; then
+    echo "blacklisted subscription, skipping - $sub"
+  else
+    setSubscription $sub
 
-  echo "Fetching VMs..."
-  vms=$(getVMs)
-  AZURE_VMS=$(($AZURE_VMS + $vms))
+    echo "Fetching VMs..."
+    vms=$(getVMs)
+    AZURE_VMS=$(($AZURE_VMS + $vms))
 
-  echo "Fetching VM Scale Sets..."
-  vmss=$(getVMSS)
-  AZURE_VMSS=$(($AZURE_VMSS + $vmss))
+    echo "Fetching VM Scale Sets..."
+    vmss=$(getVMSS)
+    AZURE_VMSS=$(($AZURE_VMSS + $vmss))
 
-  echo "Fetching SQL Databases..."
-  sql=$(getSQLServers)
-  SQL_SERVERS=$(($SQL_SERVERS + $sql))
+    echo "Fetching SQL Databases..."
+    sql=$(getSQLServers)
+    SQL_SERVERS=$(($SQL_SERVERS + $sql))
 
-  echo "Fetching Load Balancers..."
-  lbs=$(getLoadBalancers)
-  LOAD_BALANCERS=$(($LOAD_BALANCERS + $lbs))
+    echo "Fetching Load Balancers..."
+    lbs=$(getLoadBalancers)
+    LOAD_BALANCERS=$(($LOAD_BALANCERS + $lbs))
 
-  echo "Fetching Gateways..."
-  for group in $(getResourceGroups); do
-    gw=$(getGateways $group)
-    GATEWAYS=$(($GATEWAYS + $gw))
-  done
+    echo "Fetching Gateways..."
+    for group in $(getResourceGroups); do
+      gw=$(getGateways $group)
+      GATEWAYS=$(($GATEWAYS + $gw))
+    done
+  fi
 done
 
 echo "Setting back original subscription into AZ CLI context"
